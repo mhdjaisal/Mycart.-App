@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyCart - Grocery List</title>
+  <link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#4CAF50" />
+  
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Nunito', sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
+      color: #111827;
+    }
+    #splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #4CAF50;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      color: white;
+      font-size: 2rem;
+      font-weight: 700;
+      animation: fadeOut 2s ease 2s forwards;
+    }
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+    header {
+      background: #fff;
+      padding: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .logo {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #4CAF50;
+    }
+    main {
+      padding: 1rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    .date {
+      color: #6b7280;
+      margin-bottom: 0.25rem;
+    }
+    .title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .card {
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      margin: 1rem 0;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    input {
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #43a047;
+    }
+    .filters {
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 0.5rem 0;
+      margin-bottom: 1rem;
+    }
+    .category-chip {
+      display: inline-block;
+      padding: 0.5rem 1.25rem;
+      background-color: #e5e7eb;
+      color: #374151;
+      border-radius: 30px;
+      margin: 0.25rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    .category-chip.active {
+      background-color: #4CAF50;
+      color: white;
+    }
+    #grocery-list {
+      list-style: none;
+      padding: 0;
+    }
+    #grocery-list li {
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: background-color 0.2s;
+    }
+    #grocery-list li:hover {
+      background-color: #f0fdf4;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #4CAF50;
+      cursor: pointer;
+    }
+    li span {
+      flex: 1;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="splash">Welcome to MyCart</div>
+
+  <header>
+    <div class="logo">MyCart</div>
+  </header>
+  <main>
+    <div class="date" id="date"></div>
+    <div class="title">My Grocery List</div>
+
+    <div class="card">
+      <div class="form-group">
+        <input type="text" id="item-name" placeholder="Add an item..." />
+        <input type="text" id="item-qty" placeholder="Qty" />
+        <button onclick="addItem()">Add</button>
+        <button onclick="clearPickedItems()">Clear Picked</button>
+      </div>
+    </div>
+
+    <div class="filters" id="filters">
+      <span class="category-chip active" onclick="filterItems('All')">All</span>
+      <span class="category-chip" onclick="filterItems('Vegetables')">🥦 Vegetables</span>
+      <span class="category-chip" onclick="filterItems('Dairy')">🧈 Dairy</span>
+      <span class="category-chip" onclick="filterItems('Pantry')">🚒 Pantry</span>
+      <span class="category-chip" onclick="filterItems('Fruits')">🍎 Fruits</span>
+    </div>
+
+    <ul id="grocery-list"></ul>
+  </main>
+
+  <script>
+    document.getElementById('date').innerText = new Date().toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    let items = [];
+
+    function getCategoryFromItem(name) {
+      const lower = name.toLowerCase();
+      if (['apple', 'banana', 'orange', 'mango'].some(fruit => lower.includes(fruit))) return 'Fruits';
+      if (['milk', 'cheese', 'butter', 'yogurt'].some(dairy => lower.includes(dairy))) return 'Dairy';
+      if (['rice', 'flour', 'oil', 'salt'].some(pantry => lower.includes(pantry))) return 'Pantry';
+      if (['tomato', 'onion', 'carrot', 'spinach'].some(veg => lower.includes(veg))) return 'Vegetables';
+      return 'Uncategorized';
+    }
+
+    function addItem() {
+      const name = document.getElementById('item-name').value.trim();
+      const qty = document.getElementById('item-qty').value.trim();
+      const category = getCategoryFromItem(name);
+
+      if (!name || !qty) return;
+
+      items.push({ name, qty, category, checked: false });
+      renderItems(currentFilter);
+
+      document.getElementById('item-name').value = '';
+      document.getElementById('item-qty').value = '';
+    }
+
+    let currentFilter = 'All';
+
+    function renderItems(filter = 'All') {
+      const ul = document.getElementById('grocery-list');
+      ul.innerHTML = '';
+
+      const filtered = filter === 'All' ? items : items.filter(item => item.category.toLowerCase() === filter.toLowerCase());
+
+      filtered.forEach((item, index) => {
+        const li = document.createElement('li');
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = item.checked;
+        checkbox.addEventListener('change', () => {
+          item.checked = checkbox.checked;
+          renderItems(currentFilter);
+        });
+
+        const text = document.createElement('span');
+        text.textContent = `${item.name} (${item.qty}) - ${item.category}`;
+        if (item.checked) text.style.textDecoration = 'line-through';
+
+        li.appendChild(checkbox);
+        li.appendChild(text);
+        ul.appendChild(li);
+      });
+    }
+
+    function filterItems(category) {
+      currentFilter = category;
+      document.querySelectorAll('.category-chip').forEach(el => el.classList.remove('active'));
+      [...document.querySelectorAll('.category-chip')].find(el => el.textContent.includes(category)).classList.add('active');
+      renderItems(category);
+    }
+
+    function clearPickedItems() {
+      items = items.filter(item => !item.checked);
+      renderItems(currentFilter);
+    }
+  </script>
+  
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => console.log('Service Worker registered'))
+        .catch(err => console.log('Service Worker registration failed:', err));
+    });
+  }
+</script>
+  
+</body>
+</html>
